@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <select id="select" onchange="onTemplate()">
+        <option value="wenigerkrumm1.txt">Bwinf 1</option>
+        <option value="wenigerkrumm2.txt">Bwinf 2</option>
+        <option value="wenigerkrumm3.txt">Bwinf 3</option>
+        <option value="wenigerkrumm4.txt">Bwinf 4</option>
+        <option value="wenigerkrumm5.txt">Bwinf 5</option>
+        <option value="wenigerkrumm6.txt">Bwinf 6</option>
+        <option value="wenigerkrumm7.txt">Bwinf 7</option>
+    </select>
+    <input type="file" id="file">
+    <canvas id="canvas" width="900" height="700" style="border: 1px solid blue;">
+    </canvas>
+    <script>
+        document.getElementById('file').addEventListener('change', handleFileSelect, false)
+        function handleFileSelect(event) {
+            const reader = new FileReader()
+            reader.onload = (event) => handleFileLoad(event.target.result)
+            reader.readAsText(event.target.files[0])
+        }
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const template = urlParams.get('template') ?? 'wenigerkrumm1.txt'
+        document.getElementById("select").value = template
+        onTemplate()
+        function onTemplate() {
+            const template = document.getElementById("select").value
+            const url = new URL(window.location);
+            url.searchParams.set('template', template)
+            url.search = url.searchParams
+            history.pushState({}, null, url.toString())
+            fetch("templates/" + template)
+                .then((res) => res.text())
+                .then(value => handleFileLoad(value))
+        }
+        function handleFileLoad(file) {
+            const lines = file.match(/[^\r\n]+/g)
+            const points = []
+            let minX = Number.MAX_VALUE
+            let minY = Number.MAX_VALUE
+            let maxX = Number.MIN_VALUE
+            let maxY = Number.MIN_VALUE
+            for (let line of lines) {
+                console.log(line)
+                const split = line.split(" ")
+                const x = parseFloat(split[0])
+                const y = parseFloat(split[1])
+                minX = Math.min(minX, x - 20)
+                maxX = Math.max(maxX, x + 20)
+                minY = Math.min(minY, y - 20)
+                maxY = Math.max(maxY, y + 20)
+                points.push([x, y])
+            }
+            const canvas = document.getElementById("canvas")
+            const ctx = canvas.getContext("2d")
+            for (let point of points) {
+                console.log(((point[0] - minX) / (maxX - minX) * 900) + " " + ((point[1] - minY) / (maxY - minY) * 700))
+                ctx.fillRect(
+                    (point[0] - minX) / (maxX - minX) * 900,
+                    (point[1] - minY) / (maxY - minY) * 700,
+                    5,
+                    5
+                )
+            }
+        }
+    </script>
+</body>
+</html>
