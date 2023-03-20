@@ -67,7 +67,7 @@
         function redrawDots() {
             const canvas = document.getElementById("canvas")
             const ctx = canvas.getContext("2d")
-            ctx.clearRect(0, 0, ctx.width, ctx.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
             for (let point of points) {
                 console.log(((point[0] - minX) / (maxX - minX) * 900) + " " + ((point[1] - minY) / (maxY - minY) * 700))
                 ctx.fillRect(
