@@ -29,6 +29,11 @@
         const template = urlParams.get('template') ?? 'wenigerkrumm1.txt'
         document.getElementById("select").value = template
         onTemplate()
+        const points = []
+        let minX = Number.MAX_VALUE
+        let minY = Number.MAX_VALUE
+        let maxX = Number.MIN_VALUE
+        let maxY = Number.MIN_VALUE
         function onTemplate() {
             const template = document.getElementById("select").value
             const url = new URL(window.location);
@@ -41,11 +46,11 @@
         }
         function handleFileLoad(file) {
             const lines = file.match(/[^\r\n]+/g)
-            const points = []
-            let minX = Number.MAX_VALUE
-            let minY = Number.MAX_VALUE
-            let maxX = Number.MIN_VALUE
-            let maxY = Number.MIN_VALUE
+            points.length = 0
+            minX = Number.MAX_VALUE
+            minY = Number.MAX_VALUE
+            maxX = Number.MIN_VALUE
+            maxY = Number.MIN_VALUE
             for (let line of lines) {
                 console.log(line)
                 const split = line.split(" ")
@@ -57,15 +62,19 @@
                 maxY = Math.max(maxY, y + 20)
                 points.push([x, y])
             }
+            redrawDots()
+        }
+        function redrawDots() {
             const canvas = document.getElementById("canvas")
             const ctx = canvas.getContext("2d")
+            ctx.clearRect(0, 0, ctx.width, ctx.height);
             for (let point of points) {
                 console.log(((point[0] - minX) / (maxX - minX) * 900) + " " + ((point[1] - minY) / (maxY - minY) * 700))
                 ctx.fillRect(
-                    (point[0] - minX) / (maxX - minX) * 900,
-                    (point[1] - minY) / (maxY - minY) * 700,
-                    5,
-                    5
+                    (point[0] - minX) / (maxX - minX) * 900 - 3,
+                    (point[1] - minY) / (maxY - minY) * 700 - 3,
+                    6,
+                    6
                 )
             }
         }
