@@ -5,79 +5,145 @@
     <title>Title</title>
 </head>
 <body>
-    <select id="select" onchange="onTemplate()">
-        <option value="wenigerkrumm1.txt">Bwinf 1</option>
-        <option value="wenigerkrumm2.txt">Bwinf 2</option>
-        <option value="wenigerkrumm3.txt">Bwinf 3</option>
-        <option value="wenigerkrumm4.txt">Bwinf 4</option>
-        <option value="wenigerkrumm5.txt">Bwinf 5</option>
-        <option value="wenigerkrumm6.txt">Bwinf 6</option>
-        <option value="wenigerkrumm7.txt">Bwinf 7</option>
-    </select>
-    <input type="file" id="file">
-    <canvas id="canvas" width="900" height="700" style="border: 1px solid blue;">
-    </canvas>
-    <script>
-        document.getElementById('file').addEventListener('change', handleFileSelect, false)
-        function handleFileSelect(event) {
-            const reader = new FileReader()
-            reader.onload = (event) => handleFileLoad(event.target.result)
-            reader.readAsText(event.target.files[0])
-        }
-        const queryString = window.location.search;
-        const urlParams = new URLSearchParams(queryString);
-        const template = urlParams.get('template') ?? 'wenigerkrumm1.txt'
-        document.getElementById("select").value = template
-        onTemplate()
-        const points = []
-        let minX = Number.MAX_VALUE
-        let minY = Number.MAX_VALUE
-        let maxX = Number.MIN_VALUE
-        let maxY = Number.MIN_VALUE
-        function onTemplate() {
-            const template = document.getElementById("select").value
-            const url = new URL(window.location);
-            url.searchParams.set('template', template)
-            url.search = url.searchParams
-            history.pushState({}, null, url.toString())
-            fetch("templates/" + template)
-                .then((res) => res.text())
-                .then(value => handleFileLoad(value))
-        }
-        function handleFileLoad(file) {
-            const lines = file.match(/[^\r\n]+/g)
-            points.length = 0
-            minX = Number.MAX_VALUE
-            minY = Number.MAX_VALUE
-            maxX = Number.MIN_VALUE
-            maxY = Number.MIN_VALUE
-            for (let line of lines) {
-                console.log(line)
-                const split = line.split(" ")
-                const x = parseFloat(split[0])
-                const y = parseFloat(split[1])
-                minX = Math.min(minX, x - 20)
-                maxX = Math.max(maxX, x + 20)
-                minY = Math.min(minY, y - 20)
-                maxY = Math.max(maxY, y + 20)
-                points.push([x, y])
+<select id="select" onchange="onTemplate()">
+    <option value="wenigerkrumm1.txt">Bwinf 1</option>
+    <option value="wenigerkrumm2.txt">Bwinf 2</option>
+    <option value="wenigerkrumm3.txt">Bwinf 3</option>
+    <option value="wenigerkrumm4.txt">Bwinf 4</option>
+    <option value="wenigerkrumm5.txt">Bwinf 5</option>
+    <option value="wenigerkrumm6.txt">Bwinf 6</option>
+    <option value="wenigerkrumm7.txt">Bwinf 7</option>
+</select>
+<input type="file" id="file">
+<canvas id="canvas" width="900" height="700" style="border: 1px solid blue;">
+</canvas>
+<script>
+    "use strict";
+    const canvas = document.getElementById("canvas")
+    const ctx = canvas.getContext("2d")
+    const canvasLeft = canvas.offsetLeft + canvas.clientLeft;
+    const canvasTop = canvas.offsetTop + canvas.clientTop;
+    document.getElementById('file').addEventListener('change', handleFileSelect, false)
+    function handleFileSelect(event) {
+        const reader = new FileReader()
+        reader.onload = (event) => handleFileLoad(event.target.result)
+        reader.readAsText(event.target.files[0])
+    }
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const template = urlParams.get('template') ?? 'wenigerkrumm1.txt'
+    document.getElementById("select").value = template
+    onTemplate()
+    const points = []
+    const candidates = []
+    let lastClicked = null
+    let min = Number.MAX_VALUE
+    let max = Number.MIN_VALUE
+    function onTemplate() {
+        const template = document.getElementById("select").value
+        const url = new URL(window.location);
+        url.searchParams.set('template', template)
+        url.search = url.searchParams
+        history.pushState({}, null, url.toString())
+        fetch("templates/" + template)
+            .then((res) => res.text())
+            .then(value => handleFileLoad(value))
+    }
+    canvas.addEventListener('click', function(event) {
+        const x = event.pageX - canvasLeft
+        const y = event.pageY - canvasTop
+        points.forEach(function(element) {
+            if (y > element.renderY() - 6 && y < element.renderY() + 6
+                && x > element.renderX() - 6 && x < element.renderX() + 6) {
+                console.log(element)
+                element.draw('pink')
+                if (lastClicked !== null) {
+                    ctx.strokeStyle = 'red'
+                    ctx.beginPath()
+                    ctx.moveTo(lastClicked.renderX(), lastClicked.renderY())
+                    ctx.lineTo(element.renderX(), element.renderY())
+                    ctx.stroke()
+                    lastClicked.draw('pink')
+                    element.draw('red')
+                    for (let candidate of candidates) {
+                        candidate.draw('orange')
+                    }
+                    candidates.length = 0
+                    for (let point of points) {
+                        if (point === lastClicked || point === element) {
+                            continue
+                        }
+                        if (isPossible(lastClicked, element, point)) {
+                            point.draw('blue')
+                            candidates.push(point)
+                        }
+                    }
+                }
+                lastClicked = element
             }
-            redrawDots()
+        });
+
+    }, false);
+    function handleFileLoad(file) {
+        const lines = file.match(/[^\r\n]+/g)
+        points.length = 0
+        lastClicked = null
+        min = Number.MAX_VALUE
+        max = Number.MIN_VALUE
+        for (let line of lines) {
+            const split = line.split(" ")
+            const x = parseFloat(split[0])
+            const y = parseFloat(split[1])
+            min = Math.min(min, x - 20)
+            max = Math.max(max, x + 20)
+            min = Math.min(min, y - 20)
+            max = Math.max(max, y + 20)
+            points.push(
+                {
+                    x: x,
+                    y: y,
+                    renderX: function () { return (this.x - min) / (max - min) * 900 },
+                    renderY: function () { return (this.y - min) / (max - min) * 700 },
+                    draw: function (color) {
+                        ctx.fillStyle = color
+                        ctx.fillRect(
+                            this.renderX() - 6,
+                            this.renderY() - 6,
+                            12,
+                            12
+                        )
+                    }
+                }
+            )
         }
-        function redrawDots() {
-            const canvas = document.getElementById("canvas")
-            const ctx = canvas.getContext("2d")
-            ctx.clearRect(0, 0, canvas.width, canvas.height)
-            for (let point of points) {
-                console.log(((point[0] - minX) / (maxX - minX) * 900) + " " + ((point[1] - minY) / (maxY - minY) * 700))
-                ctx.fillRect(
-                    (point[0] - minX) / (maxX - minX) * 900 - 3,
-                    (point[1] - minY) / (maxY - minY) * 700 - 3,
-                    6,
-                    6
-                )
-            }
+        redrawDots()
+    }
+    function isPossible(start, over, end) {
+        let dot = (over.x - start.x) * (over.x - end.x)
+            + (over.y - start.y) * (over.y - end.y);
+        return dot <= 0;
+        if (dot === 0) {
+            return true;
         }
-    </script>
+        let angle = dot / (Math.abs(over.x - start.x) * Math.abs(over.x - end.x)
+            + Math.abs(over.y - start.y) * Math.abs(over.y - end.y)) * (180/Math.PI)
+
+        if (angle < 0) {
+            angle += 180
+        }
+        if (angle > 180) {
+            angle -= 180
+        }
+        console.log(angle)
+        return angle >= 90;
+    }
+
+    function redrawDots() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        for (let point of points) {
+            point.draw('orange')
+        }
+    }
+</script>
 </body>
 </html>
