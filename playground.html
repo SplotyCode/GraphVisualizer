@@ -17,6 +17,7 @@
 <input type="file" id="file">
 <canvas id="canvas" width="900" height="700" style="border: 1px solid blue;">
 </canvas>
+<input type="text" onkeydown="solutionUpdate(this)">
 <script>
     "use strict";
     const canvas = document.getElementById("canvas")
@@ -28,6 +29,15 @@
         const reader = new FileReader()
         reader.onload = (event) => handleFileLoad(event.target.result)
         reader.readAsText(event.target.files[0])
+    }
+    function solutionUpdate(element) {
+        if(event.key === 'Enter') {
+            element.value.split(" ").forEach(function(obj, index) {
+                setTimeout(function(){
+                    points[obj].select();
+                }, 5000 * (index + 1));
+            });       
+        }
     }
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -56,30 +66,7 @@
             if (y > element.renderY() - 6 && y < element.renderY() + 6
                 && x > element.renderX() - 6 && x < element.renderX() + 6) {
                 console.log(element)
-                element.draw('pink')
-                if (lastClicked !== null) {
-                    ctx.strokeStyle = 'red'
-                    ctx.beginPath()
-                    ctx.moveTo(lastClicked.renderX(), lastClicked.renderY())
-                    ctx.lineTo(element.renderX(), element.renderY())
-                    ctx.stroke()
-                    lastClicked.draw('pink')
-                    element.draw('red')
-                    for (let candidate of candidates) {
-                        candidate.draw('orange')
-                    }
-                    candidates.length = 0
-                    for (let point of points) {
-                        if (point === lastClicked || point === element) {
-                            continue
-                        }
-                        if (isPossible(lastClicked, element, point)) {
-                            point.draw('blue')
-                            candidates.push(point)
-                        }
-                    }
-                }
-                lastClicked = element
+                element.select()
             }
         });
 
@@ -104,6 +91,35 @@
                     y: y,
                     renderX: function () { return (this.x - min) / (max - min) * 900 },
                     renderY: function () { return (this.y - min) / (max - min) * 700 },
+                    select: function () {
+                        this.draw('pink')
+                        if (lastClicked !== null) {
+                            if (!candidates.includes(this)) {
+                                alert("Impossible move")
+                            }
+                            ctx.strokeStyle = 'red'
+                            ctx.beginPath()
+                            ctx.moveTo(lastClicked.renderX(), lastClicked.renderY())
+                            ctx.lineTo(this.renderX(), this.renderY())
+                            ctx.stroke()
+                            lastClicked.draw('pink')
+                            this.draw('red')
+                            for (let candidate of candidates) {
+                                candidate.draw('orange')
+                            }
+                            candidates.length = 0
+                            for (let point of points) {
+                                if (point === lastClicked || point === this) {
+                                    continue
+                                }
+                                if (isPossible(lastClicked, this, point)) {
+                                    point.draw('blue')
+                                    candidates.push(point)
+                                }
+                            }
+                        }
+                        lastClicked = this
+                    },
                     draw: function (color) {
                         ctx.fillStyle = color
                         ctx.fillRect(
