@@ -34,8 +34,9 @@
         if(event.key === 'Enter') {
             element.value.split(" ").forEach(function(obj, index) {
                 setTimeout(function(){
+                    points[obj].text = path.length + 1
                     points[obj].select();
-                }, 5000 * (index + 1));
+                }, 800 * (index + 1));
             });       
         }
     }
@@ -46,6 +47,7 @@
     onTemplate()
     const points = []
     const candidates = []
+    const path = []
     let lastClicked = null
     let min = Number.MAX_VALUE
     let max = Number.MIN_VALUE
@@ -89,12 +91,13 @@
                 {
                     x: x,
                     y: y,
+                    text: null,
                     renderX: function () { return (this.x - min) / (max - min) * 900 },
                     renderY: function () { return (this.y - min) / (max - min) * 700 },
                     select: function () {
                         this.draw('pink')
                         if (lastClicked !== null) {
-                            if (!candidates.includes(this)) {
+                            if (path.length > 2 && !candidates.includes(this)) {
                                 alert("Impossible move")
                             }
                             ctx.strokeStyle = 'red'
@@ -118,6 +121,7 @@
                                 }
                             }
                         }
+                        path.push(this)
                         lastClicked = this
                     },
                     draw: function (color) {
@@ -128,6 +132,9 @@
                             12,
                             12
                         )
+                        if (this.text != null) {
+                            ctx.fillText(text, this.renderX() - 6, this.renderY() - 6)
+                        }
                     }
                 }
             )
