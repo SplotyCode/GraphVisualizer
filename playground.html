@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8">
+  <title>Title</title>
 </head>
 <body>
 <select id="select" onchange="onTemplate()">
-    <option value="wenigerkrumm1.txt">1 - Test</option>
-    <option value="wenigerkrumm2.txt">2 - Circles</option>
-    <option value="wenigerkrumm3.txt">3 - Flower</option>
-    <option value="wenigerkrumm4.txt">4 - Random1</option>
-    <option value="wenigerkrumm5.txt">5 - Random2</option>
-    <option value="wenigerkrumm6.txt">6 - Random3</option>
-    <option value="wenigerkrumm7.txt">7 - Random4</option>
+  <option value="wenigerkrumm1.txt">1 - Test</option>
+  <option value="wenigerkrumm2.txt">2 - Circles</option>
+  <option value="wenigerkrumm3.txt">3 - Flower</option>
+  <option value="wenigerkrumm4.txt">4 - Random1</option>
+  <option value="wenigerkrumm5.txt">5 - Random2</option>
+  <option value="wenigerkrumm6.txt">6 - Random3</option>
+  <option value="wenigerkrumm7.txt">7 - Random4</option>
 </select>
 <input type="file" id="file">
 <canvas id="canvas" width="900" height="700" style="border: 1px solid blue;">
@@ -37,7 +37,7 @@
                     points[obj].text = path.length + 1
                     points[obj].select();
                 }, 800 * (index + 1));
-            });       
+            });
         }
     }
     const queryString = window.location.search;
@@ -73,6 +73,10 @@
         });
 
     }, false);
+    function getColor(value){
+        var hue=((1-value)*120).toString(10);
+        return ["hsl(",hue,",100%,50%)"].join("");
+    }
     function handleFileLoad(file) {
         const lines = file.match(/[^\r\n]+/g)
         points.length = 0
@@ -105,14 +109,14 @@
                             ctx.moveTo(lastClicked.renderX(), lastClicked.renderY())
                             ctx.lineTo(this.renderX(), this.renderY())
                             ctx.stroke()
-                            lastClicked.draw('pink')
+                            lastClicked.draw(getColor(path.length / points.length))
                             this.draw('red')
                             for (let candidate of candidates) {
                                 candidate.draw('orange')
                             }
                             candidates.length = 0
                             for (let point of points) {
-                                if (point === lastClicked || point === this) {
+                                if (point === lastClicked || point === this || path.includes(point)) {
                                     continue
                                 }
                                 if (isPossible(lastClicked, this, point)) {
@@ -132,8 +136,10 @@
                             12,
                             12
                         )
+                        ctx.fillStyle = "black"
                         if (this.text != null) {
-                            ctx.fillText(text, this.renderX() - 6, this.renderY() - 6)
+                            ctx.font = "12px serif";
+                            ctx.fillText(this.text, this.renderX(), this.renderY())
                         }
                     }
                 }
